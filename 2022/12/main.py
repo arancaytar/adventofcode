@@ -1,3 +1,4 @@
+import collections
 import sys
 import numpy as np
 import heapq
@@ -20,7 +21,8 @@ def solve1(data):
     height, width = matrix.shape
 
     best = np.ones(matrix.shape,dtype=int) * (height * width + 1)
-    dijkstra(best, neighbor_function(matrix), start)
+    #dijkstra(best, neighbor_function(matrix), start)
+    bfs(best, neighbor_function(matrix), start)
 
     return best[end]
 
@@ -52,6 +54,17 @@ def dijkstra(best, adjacency, source):
         for v, edge in adjacency(u):
             heapq.heappush(queue, (best_u + edge, v))
 
+def bfs(best, adjacency, source):
+    queue = collections.deque([(0, source)])
+
+    while queue:
+        (best_u, u) = queue.popleft()
+        if best[u] <= best_u:
+            continue
+        best[u] = best_u
+        for v, _ in adjacency(u):
+            queue.append((best_u + 1, v))
+
 
 def rchr(letter):
     if letter == 'S':
@@ -74,17 +87,18 @@ def solve2(data):
             if matrix[y,x] == 0:
                 starts.add((y,x))
 
-    neighbors = neighbor_function(matrix)
-    def neighbors_(coord):
-        if coord == start:
-            yield from ((s,0) for s in starts)
+    #dijkstra(best, multisource(neighbor_function(matrix), starts, start), start)
+    bfs(best, multisource(neighbor_function(matrix), starts, start), start)
+
+    return best[end] - 1
+
+def multisource(adjacency, sources, source):
+    def adjacency_(coord):
+        if coord == source:
+            yield from ((s, 0) for s in sources)
         else:
-            yield from neighbors(coord)
-
-    dijkstra(best, neighbors_, start)
-
-    return best[end]
-
+            yield from adjacency(coord)
+    return adjacency_
 
 data = sys.stdin.read().strip()
 
