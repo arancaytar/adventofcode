@@ -1,0 +1,20 @@
+graph {node [label="AA,0"]AA;
+node [label="BB,13"]BB;
+node [label="CC,2"]CC;
+node [label="DD,20"]DD;
+node [label="EE,3"]EE;
+node [label="FF,0"]FF;
+node [label="GG,0"]GG;
+node [label="HH,22"]HH;
+node [label="II,0"]II;
+node [label="JJ,21"]JJ;
+BB -- AA;
+EE -- DD;
+II -- AA;
+DD -- AA;
+FF -- GG;
+CC -- DD;
+BB -- CC;
+EE -- FF;
+HH -- GG;
+JJ -- II;}
