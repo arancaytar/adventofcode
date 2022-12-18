@@ -73,19 +73,24 @@ def gcd(a,b):
         a, b = b, a % b
     return a
 
+def wind_generator(wind, phase=0):
+    x = {'time': phase % len(wind)}
+    def wind_fn():
+        w, x['time'] = wind[x['time']], (x['time'] + 1) % len(wind)
+        return w
+    return wind_fn
+
 def solve2(data):
     shapes = get_shapes()
     wind = [{'<': -1, '>': 1}[x] for x in data]
     print(len(wind), len(shapes))
     period = lcm(len(shapes), len(wind))
     print(f"Period = {period}")
-    def wind_fn(x={'time': 0}):
-        w, x['time'] = wind[x['time']], (x['time'] + 1) % len(wind)
-        return w
     grid = Grid()
     i = 0
     cache = {}
     limit = 10**12
+    wind_fn = wind_generator(wind)
     while i + period < limit:
         current = str(grid)
         print(i, len(cache))
