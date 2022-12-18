@@ -4,8 +4,8 @@ import numpy as np
 class Grid:
     def __init__(self, a=None, height=0):
         self.a = list(a or [])
-        self.height = height
-        self.cut = height - len(self.a)
+        self.height = max(height, len(self.a))
+        self.cut = self.height - len(self.a)
         self.heights = [-1]*7
         for y, row in enumerate(self.a):
             for x, cell in enumerate(row):
@@ -15,9 +15,7 @@ class Grid:
 
     def recut(self):
         r = min(self.heights) # all columns have at least one block up to this height.
-        #return False
         if r >= self.cut:
-            #print(f"Recutting from {self.cut} to {r+1}.")
             self.a = self.a[r + 1 - self.cut:]
             self.cut = r + 1
 
@@ -43,7 +41,6 @@ class Grid:
         except IndexError:
             raise IndexError(f"Trying to place {value} into ({x}, {y}) -> ({x}, {y - self.cut}) on grid of actual height {len(self.a)} and virtual height {self.height} with cut {self.cut}.")
         self.heights[x] = max(self.heights[x], y)
-        #self.recut()
 
     def __repr__(self):
         return str(self) + f"\n{self.cut} rows hidden."
@@ -66,10 +63,21 @@ def solve1(data):
     print(repr(grid))
     return grid.height
 
+def lcm(a,b):
+    return a * b // gcd(a,b)
+
+def gcd(a,b):
+    if a < b:
+        return gcd(b, a)
+    while b:
+        a, b = b, a % b
+    return a
+
 def solve2(data):
     shapes = get_shapes()
     wind = [{'<': -1, '>': 1}[x] for x in data]
-    periodicity = len(shapes) * len(wind)
+    print(len(wind), len(shapes))
+    periodicity = lcm(len(shapes), len(wind))
     print(f"Periodicity = {periodicity}")
     def wind_fn(x={'time': 0}):
         w, x['time'] = wind[x['time']], (x['time'] + 1) % len(wind)
@@ -86,32 +94,50 @@ def solve2(data):
             for i2 in range(i, i + periodicity):
                 simulate_rock(grid, shapes[i2 % len(shapes)], wind_fn)
                 grid.recut()
-            cache[current] = (list(map(list, grid.a)), grid.height - h)
+            cache[current] = (list(map(list, grid.a)), grid.height - h, i, len(cache))
             i += periodicity
+            print(repr(grid))
         else:
             print("Cycle found")
             h = grid.height
             cycle_length, cycle_height = cycle_search(cache, current)
+            cycle_length *= periodicity
             cycles = (limit - i) // cycle_length
             print(f"Cycle of length {cycle_length} and growth {cycle_height} fitting {cycles} up to {limit}.")
+
             h += cycles * cycle_height
             i += cycles * cycle_length
             grid = Grid(grid.a, h)
+            print(i)
+            break
     for i2 in range(i, limit):
+        print(i2, grid.height)
         simulate_rock(grid, shapes[i2 % len(shapes)], wind_fn)
         grid.recut()
+
         #print(repr(grid))
+
     print(repr(grid), grid.height)
 
 def cycle_search(cache, start):
     current = start
     i = 1
     height = 0
-    while str(cache[current][0]) != start:
-        i += 1
+    print(current)
+    while True:
+        print(f"Cycling {i} {current}", cache[current])
+        #print("\n\n\n".join(cache.keys()))
+        #print(cache[current])
+        #print(cache[current][0])
+        current = str(Grid(cache[current][0]))
         height += cache[current][1]
-        current = str(cache[current][0])
+        if current == start:
+            break
+        i += 1
+
+
     return i, height
+
 def simulate_rock(grid: Grid, shape, wind):
     position = [2, grid.height + 3]
     for i in range(0, position[1] + 2):
