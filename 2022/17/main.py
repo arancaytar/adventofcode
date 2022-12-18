@@ -77,8 +77,8 @@ def solve2(data):
     shapes = get_shapes()
     wind = [{'<': -1, '>': 1}[x] for x in data]
     print(len(wind), len(shapes))
-    periodicity = lcm(len(shapes), len(wind))
-    print(f"Periodicity = {periodicity}")
+    period = lcm(len(shapes), len(wind))
+    print(f"Period = {period}")
     def wind_fn(x={'time': 0}):
         w, x['time'] = wind[x['time']], (x['time'] + 1) % len(wind)
         return w
@@ -86,22 +86,22 @@ def solve2(data):
     i = 0
     cache = {}
     limit = 10**12
-    while i + periodicity < limit:
+    while i + period < limit:
         current = str(grid)
         print(i, len(cache))
         if current not in cache:
             h = grid.height
-            for i2 in range(i, i + periodicity):
+            for i2 in range(i, i + period):
                 simulate_rock(grid, shapes[i2 % len(shapes)], wind_fn)
                 grid.recut()
             cache[current] = (list(map(list, grid.a)), grid.height - h, i, len(cache))
-            i += periodicity
+            i += period
             print(repr(grid))
         else:
             print("Cycle found")
             h = grid.height
             cycle_length, cycle_height = cycle_search(cache, current)
-            cycle_length *= periodicity
+            cycle_length *= period
             cycles = (limit - i) // cycle_length
             print(f"Cycle of length {cycle_length} and growth {cycle_height} fitting {cycles} up to {limit}.")
 
