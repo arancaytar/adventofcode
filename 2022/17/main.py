@@ -6,18 +6,12 @@ class Grid:
         self.a = list(a or [])
         self.height = max(height, len(self.a))
         self.cut = self.height - len(self.a)
-        self.heights = [-1]*7
-        for y, row in enumerate(self.a):
-            for x, cell in enumerate(row):
-                if cell:
-                    self.heights[x] = y + self.cut
         self.recut()
 
     def recut(self):
-        r = min(self.heights) # all columns have at least one block up to this height.
-        if r >= self.cut:
-            self.a = self.a[r + 1 - self.cut:]
-            self.cut = r + 1
+        if len(self.a) > 40:
+            self.cut += len(self.a) - 40
+            self.a = self.a[-40:]
 
     def __getitem__(self, position):
         x, y = position
@@ -40,7 +34,6 @@ class Grid:
             self.a[y - self.cut][x] = value
         except IndexError:
             raise IndexError(f"Trying to place {value} into ({x}, {y}) -> ({x}, {y - self.cut}) on grid of actual height {len(self.a)} and virtual height {self.height} with cut {self.cut}.")
-        self.heights[x] = max(self.heights[x], y)
 
     def __repr__(self):
         return str(self) + f"\n{self.cut} rows hidden."
