@@ -9,56 +9,53 @@ import re
 from fractions import Fraction
 from functools import reduce
 from operator import mul
+from grid import Grid
 
 def read():
     grid, instructions = sys.stdin.read().strip().split("\n\n")
-    grid = [list(row) for row in grid.split("\n")]
+    grid = Grid.read(grid)
     instructions = list(instructions.replace("\n", ""))
-    for i, row in enumerate(grid):
-        for j, c in enumerate(row):
-            if c == '@':
-                grid[i][j] = '.'
-                return grid, instructions, (j, i)
+    for (x, y), c in grid:
+        if c == '@':
+            grid[x,y] = '.'
+            return grid, instructions, (j, i)
     raise ValueError("No starting position")
 
 def solve1(grid, instructions, start):
-    grid = [list(row) for row in grid]
+    grid = copy(grid)
     x, y = start
-    width, height = len(grid[0]), len(grid)
+    width, height = grid.width, grid.height
     lookup = {"^": (0, -1), ">": (1, 0), "v": (0, 1), "<": (-1, 0)}
     boxes = set()
-    for i, row in enumerate(grid):
-        for j, c in enumerate(row):
-            if grid[i][j] == 'O':
-                boxes.add((j, i))
+    for (x,y), c in grid:
+        if c == 'O':
+            boxes.add((x,y))
     for move in instructions:
         dx, dy = lookup[move]
         x2, y2 = x + dx, y + dy
         x3, y3 = x2, y2
-        while grid[y3][x3] == 'O':
+        while grid[x3,y3] == 'O':
             x3, y3 = x3 + dx, y3 + dy
-        if grid[y3][x3] == '#':
+        if grid[x3,y3] == '#':
             continue # hit a wall
         else:
-            grid[y3][x3] = 'O' # move all boxes one step
-            grid[y2][x2] = '.'
+            grid[x3,y3] = 'O' # move all boxes one step
+            grid[x2,y2] = '.'
             boxes.add((x3, y3))
             boxes.remove((x2, y2))
             x, y = x2, y2
-    #print(boxes)
     return sum(x + 100*y for x, y in boxes)
             
 def solve2(grid, instructions, start):
     display_grid(grid)
     grid, start = widen(grid, start)
     display_grid(grid)
-    width, height = len(grid[0]), len(grid)
+    width, height = grid.width, grid.height
     lookup = {"^": (0, -1), ">": (1, 0), "v": (0, 1), "<": (-1, 0)}
     boxes = set()    
-    for i, row in enumerate(grid):
-        for j, c in enumerate(row):
-            if grid[i][j] == '[':
-                boxes.add((j, i))
+    for (x,y), c in grid:
+        if c == '[':
+            boxes.add((x, y))
     x, y = start
     for move in instructions:
         def try_move(x2, y2):
@@ -69,7 +66,7 @@ def solve2(grid, instructions, start):
                 check2 = set()
                 free2 = set()
                 for x3, y3 in check:
-                    if grid[y3][x3] == '#':
+                    if grid[x3,y3] == '#':
                         return False, set()
                     elif {(x3, y3), (x3 - 1, y3)} & targets:
                         continue # if we already know we're moving a box from here, no need to check it again
@@ -79,7 +76,7 @@ def solve2(grid, instructions, start):
                     elif (x3 - 1, y3) in boxes: # hit a box's right side
                         targets.add((x3 - 1, y3))
                         check2 |= {(x3 - 1 + dx, y3 + dy), (x3 + dx, y3 + dy)}
-                    elif grid[y3][x3] == '.':
+                    elif grid[x3,y3] == '.':
                         free2.add((x3, y3))
                 check, free = check2, free2
             return True, targets
@@ -90,9 +87,9 @@ def solve2(grid, instructions, start):
         if success:
             boxes = boxes - targets | {(x + dx, y + dy) for x, y in targets}
             for x, y in targets:
-                grid[y][x:x+2] = ['.', '.']
+                grid[x:x+2,y] = ['.', '.']
             for x, y in targets:
-                grid[y+dy][x+dx:x+dx+2] = ['[', ']']
+                grid[x+dx:x+dx+2,y] = ['[', ']']
             x, y = x2, y2
     display_grid(grid)
         
